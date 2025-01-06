@@ -1,32 +1,56 @@
-import streamlit as st
-import joblib
-import pandas as pd
 import requests
+import joblib
+import os
+import streamlit as st
 
-# Function to download the model from Google Drive
+# Function to handle the download from Google Drive
+def download_model_from_drive(file_id, destination):
+    URL = f"https://drive.google.com/uc?export=download&id={file_id}"
+    session = requests.Session()
+    response = session.get(URL, params={'id': file_id}, stream=True)
+    token = get_confirm_token(response)
+
+    if token:
+        params = {'id': file_id, 'confirm': token}
+        response = session.get(URL, params=params, stream=True)
+
+    save_response_content(response, destination)
+    return destination
+
+# Check for the confirmation token from Google Drive
+def get_confirm_token(response):
+    for key, value in response.cookies.items():
+        if key.startswith('download_warning'):
+            return value
+    return None
+
+# Save the content of the file
+def save_response_content(response, destination):
+    CHUNK_SIZE = 32768
+    with open(destination, "wb") as f:
+        for chunk in response.iter_content(CHUNK_SIZE):
+            if chunk:
+                f.write(chunk)
+
+# Model file ID from the Google Drive link
+MODEL_FILE_ID = "15u6GSqBo6YxEDELTVxuRX5ASPSRsSLhF"
+MODEL_PATH = "churning_model.pkl"
+
+# Function to load the model from Google Drive
 @st.cache_resource
-def load_model_from_drive(file_url):
-    """Download and load the model from a Google Drive link."""
-    file_id = file_url.split("/d/")[1].split("/view")[0]
-    download_url = f"https://drive.google.com/uc?id={file_id}"
-    
-    # Download the file
-    response = requests.get(download_url)
-    if response.status_code == 200:
-        with open("churning_model.pkl", "wb") as file:
-            file.write(response.content)
-        return joblib.load("churning_model.pkl")
-    else:
-        st.error("Failed to download the model from Google Drive. Check the link.")
-        return None
+def load_model():
+    if not os.path.exists(MODEL_PATH):
+        download_model_from_drive(MODEL_FILE_ID, MODEL_PATH)
+    return joblib.load(MODEL_PATH)
 
 # Load the model
-MODEL_URL = "https://drive.google.com/file/d/15u6GSqBo6YxEDELTVxuRX5ASPSRsSLhF/view?usp=drive_link"
-model = load_model_from_drive(MODEL_URL)
+model = load_model()
 
 # Ensure model is loaded
 if model is None:
-    st.stop()
+    st.error("Failed to load the model!")
+else:
+    st.success("Model loaded successfully!")
 
 # Inspect the features the model expects
 expected_features = list(model.feature_names_in_)
