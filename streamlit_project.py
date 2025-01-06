@@ -6,11 +6,6 @@ import streamlit as st
 
 # Google Drive File ID (from the URL)
 file_id = "15u6GSqBo6YxEDELTVxuRX5ASPSRsSLhF"
-import os
-if os.path.exists(MODEL_PATH):
-    print("Model file exists")
-else:
-    print("Model file does not exist")
 
 # Path to save the model
 MODEL_PATH = 'churning_model.pkl'
@@ -25,6 +20,13 @@ def load_model():
         # If the model is not found, download it from Google Drive
         download_model_from_drive(file_id, MODEL_PATH)
     return joblib.load(MODEL_PATH)
+    
+
+import os
+if os.path.exists(MODEL_PATH):
+    print("Model file exists")
+else:
+    print("Model file does not exist")
 
 # Load the model
 model = load_model()
