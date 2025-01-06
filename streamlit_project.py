@@ -6,6 +6,11 @@ import streamlit as st
 
 # Google Drive File ID (from the URL)
 file_id = "15u6GSqBo6YxEDELTVxuRX5ASPSRsSLhF"
+import os
+if os.path.exists(MODEL_PATH):
+    print("Model file exists")
+else:
+    print("Model file does not exist")
 
 # Path to save the model
 MODEL_PATH = 'churning_model.pkl'
