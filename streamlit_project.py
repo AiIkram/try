@@ -1,7 +1,8 @@
 import requests
-import joblib
+import pickle
 import os
 import streamlit as st
+import pandas as pd
 
 # Function to handle the download from Google Drive
 def download_model_from_drive(file_id, destination):
@@ -36,12 +37,15 @@ def save_response_content(response, destination):
 MODEL_FILE_ID = "15u6GSqBo6YxEDELTVxuRX5ASPSRsSLhF"
 MODEL_PATH = "churning_model.pkl"
 
-# Function to load the model from Google Drive
+# Function to load the model from Google Drive using pickle
 @st.cache_resource
 def load_model():
     if not os.path.exists(MODEL_PATH):
         download_model_from_drive(MODEL_FILE_ID, MODEL_PATH)
-    return joblib.load(MODEL_PATH)
+    # Load the model using pickle instead of joblib
+    with open(MODEL_PATH, 'rb') as f:
+        model = pickle.load(f)
+    return model
 
 # Load the model
 model = load_model()
