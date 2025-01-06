@@ -1,24 +1,14 @@
 import streamlit as st
-import joblib
+import pickle
 import pandas as pd
-import os
 
-# Load the trained model
+# Load the trained model using pickle
 try:
-    model_path = 'churning_model.pkl'
-    if not os.path.exists(model_path):
-        st.error(f"Model file not found: {model_path}")
-        st.stop()
-
-    model = joblib.load(model_path)
-    if not hasattr(model, 'feature_names_in_'):
-        st.error("The loaded model does not contain the expected 'feature_names_in_' attribute.")
-        st.stop()
-
-    # Inspect the features the model expects
+    with open('churning_model.pkl', 'rb') as file:
+        model = pickle.load(file)
     expected_features = model.feature_names_in_
 except Exception as e:
-    st.error(f"Failed to load the model: {e}")
+    st.error(f"Failed to load the model: {type(e).__name__}: {e}")
     st.stop()
 
 # Define the app
@@ -28,7 +18,7 @@ st.header('Enter Customer Details')
 
 # Collect input features
 inputs = {
-    'REGION': st.number_input('Region', min_value=0.0, max_value=10.0, step=1.0, value=1.0),  # Add REGION
+    'REGION': st.number_input('Region', min_value=0.0, max_value=10.0, step=1.0, value=1.0),
     'TENURE': st.slider('Tenure (months)', 0, 72, 13),
     'MONTANT': st.number_input('Montant', min_value=0.0, max_value=15350.0, step=1.0, value=3600.0),
     'FREQUENCE_RECH': st.number_input('Frequence Recherche', min_value=0.0, max_value=33.0, step=1.0, value=7.0),
@@ -54,8 +44,7 @@ input_df = pd.DataFrame([inputs])
 try:
     input_df = input_df[expected_features]
 except KeyError as e:
-    missing_features = set(expected_features) - set(input_df.columns)
-    st.error(f"The following expected features are missing from input: {missing_features}")
+    st.error(f"Missing or mismatched features: {e}")
     st.stop()
 
 # Predict and display results
@@ -63,5 +52,5 @@ if st.button('Predict'):
     try:
         prediction = model.predict(input_df)
         st.write('Prediction: Churn' if prediction[0] else 'Prediction: Not Churn')
-    except Exception as e:
+    except ValueError as e:
         st.error(f"Prediction failed: {e}")
