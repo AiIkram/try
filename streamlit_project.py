@@ -1,15 +1,12 @@
 import streamlit as st
-import pickle
+import joblib
 import pandas as pd
 
-# Load the trained model using pickle
-try:
-    with open('churning_model.pkl', 'rb') as file:
-        model = pickle.load(file)
-    expected_features = model.feature_names_in_
-except Exception as e:
-    st.error(f"Failed to load the model: {type(e).__name__}: {e}")
-    st.stop()
+# Load the trained model
+model = joblib.load('https://drive.google.com/file/d/15u6GSqBo6YxEDELTVxuRX5ASPSRsSLhF/view?usp=drive_link')
+
+# Inspect the features the model expects
+expected_features = model.feature_names_in_
 
 # Define the app
 st.title('Customer Churn Prediction')
@@ -18,7 +15,7 @@ st.header('Enter Customer Details')
 
 # Collect input features
 inputs = {
-    'REGION': st.number_input('Region', min_value=0.0, max_value=10.0, step=1.0, value=1.0),
+    'REGION': st.number_input('Region', min_value=0.0, max_value=10.0, step=1.0, value=1.0),  # Add REGION
     'TENURE': st.slider('Tenure (months)', 0, 72, 13),
     'MONTANT': st.number_input('Montant', min_value=0.0, max_value=15350.0, step=1.0, value=3600.0),
     'FREQUENCE_RECH': st.number_input('Frequence Recherche', min_value=0.0, max_value=33.0, step=1.0, value=7.0),
