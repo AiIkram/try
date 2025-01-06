@@ -1,37 +1,14 @@
-import requests
+import gdown
 import pickle
 import os
 import streamlit as st
 import pandas as pd
 
-# Function to handle the download from Google Drive
+# Function to download model using gdown
 def download_model_from_drive(file_id, destination):
-    URL = f"https://drive.google.com/uc?export=download&id={file_id}"
-    session = requests.Session()
-    response = session.get(URL, params={'id': file_id}, stream=True)
-    token = get_confirm_token(response)
-
-    if token:
-        params = {'id': file_id, 'confirm': token}
-        response = session.get(URL, params=params, stream=True)
-
-    save_response_content(response, destination)
+    url = f"https://drive.google.com/uc?id={file_id}"
+    gdown.download(url, destination, quiet=False)
     return destination
-
-# Check for the confirmation token from Google Drive
-def get_confirm_token(response):
-    for key, value in response.cookies.items():
-        if key.startswith('download_warning'):
-            return value
-    return None
-
-# Save the content of the file
-def save_response_content(response, destination):
-    CHUNK_SIZE = 32768
-    with open(destination, "wb") as f:
-        for chunk in response.iter_content(CHUNK_SIZE):
-            if chunk:
-                f.write(chunk)
 
 # Model file ID from the Google Drive link
 MODEL_FILE_ID = "15u6GSqBo6YxEDELTVxuRX5ASPSRsSLhF"
@@ -42,7 +19,7 @@ MODEL_PATH = "churning_model.pkl"
 def load_model():
     if not os.path.exists(MODEL_PATH):
         download_model_from_drive(MODEL_FILE_ID, MODEL_PATH)
-    # Load the model using pickle instead of joblib
+    # Load the model using pickle
     with open(MODEL_PATH, 'rb') as f:
         model = pickle.load(f)
     return model
