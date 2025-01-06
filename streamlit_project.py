@@ -1,12 +1,25 @@
 import streamlit as st
 import joblib
 import pandas as pd
+import os
 
 # Load the trained model
-model = joblib.load('churning_model.pkl')
+try:
+    model_path = 'churning_model.pkl'
+    if not os.path.exists(model_path):
+        st.error(f"Model file not found: {model_path}")
+        st.stop()
 
-# Inspect the features the model expects
-expected_features = model.feature_names_in_
+    model = joblib.load(model_path)
+    if not hasattr(model, 'feature_names_in_'):
+        st.error("The loaded model does not contain the expected 'feature_names_in_' attribute.")
+        st.stop()
+
+    # Inspect the features the model expects
+    expected_features = model.feature_names_in_
+except Exception as e:
+    st.error(f"Failed to load the model: {e}")
+    st.stop()
 
 # Define the app
 st.title('Customer Churn Prediction')
@@ -41,7 +54,8 @@ input_df = pd.DataFrame([inputs])
 try:
     input_df = input_df[expected_features]
 except KeyError as e:
-    st.error(f"Missing or mismatched features: {e}")
+    missing_features = set(expected_features) - set(input_df.columns)
+    st.error(f"The following expected features are missing from input: {missing_features}")
     st.stop()
 
 # Predict and display results
@@ -49,5 +63,5 @@ if st.button('Predict'):
     try:
         prediction = model.predict(input_df)
         st.write('Prediction: Churn' if prediction[0] else 'Prediction: Not Churn')
-    except ValueError as e:
+    except Exception as e:
         st.error(f"Prediction failed: {e}")
