@@ -1,12 +1,35 @@
 import streamlit as st
 import joblib
 import pandas as pd
+import requests
 
-# Load the trained model
-model = joblib.load('https://drive.google.com/file/d/15u6GSqBo6YxEDELTVxuRX5ASPSRsSLhF/view?usp=drive_link')
+# Function to download the model from Google Drive
+@st.cache_resource
+def load_model_from_drive(file_url):
+    """Download and load the model from a Google Drive link."""
+    file_id = file_url.split("/d/")[1].split("/view")[0]
+    download_url = f"https://drive.google.com/uc?id={file_id}"
+    
+    # Download the file
+    response = requests.get(download_url)
+    if response.status_code == 200:
+        with open("churning_model.pkl", "wb") as file:
+            file.write(response.content)
+        return joblib.load("churning_model.pkl")
+    else:
+        st.error("Failed to download the model from Google Drive. Check the link.")
+        return None
+
+# Load the model
+MODEL_URL = "https://drive.google.com/file/d/15u6GSqBo6YxEDELTVxuRX5ASPSRsSLhF/view?usp=drive_link"
+model = load_model_from_drive(MODEL_URL)
+
+# Ensure model is loaded
+if model is None:
+    st.stop()
 
 # Inspect the features the model expects
-expected_features = model.feature_names_in_
+expected_features = list(model.feature_names_in_)
 
 # Define the app
 st.title('Customer Churn Prediction')
