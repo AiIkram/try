@@ -1,28 +1,25 @@
 import gdown
-import pickle
+import joblib
 import os
-import streamlit as st
 import pandas as pd
+import streamlit as st
 
-# Function to download model using gdown
+# Google Drive File ID (from the URL)
+file_id = "15u6GSqBo6YxEDELTVxuRX5ASPSRsSLhF"
+
+# Path to save the model
+MODEL_PATH = 'churning_model.pkl'
+
+# Function to download the model from Google Drive
 def download_model_from_drive(file_id, destination):
-    url = f"https://drive.google.com/uc?id={file_id}"
-    gdown.download(url, destination, quiet=False)
-    return destination
+    gdown.download(f"https://drive.google.com/uc?export=download&id={file_id}", destination, quiet=False)
 
-# Model file ID from the Google Drive link
-MODEL_FILE_ID = "15u6GSqBo6YxEDELTVxuRX5ASPSRsSLhF"
-MODEL_PATH = "churning_model.pkl"
-
-# Function to load the model from Google Drive using pickle
-@st.cache_resource
+# Function to load the model
 def load_model():
     if not os.path.exists(MODEL_PATH):
-        download_model_from_drive(MODEL_FILE_ID, MODEL_PATH)
-    # Load the model using pickle
-    with open(MODEL_PATH, 'rb') as f:
-        model = pickle.load(f)
-    return model
+        # If the model is not found, download it from Google Drive
+        download_model_from_drive(file_id, MODEL_PATH)
+    return joblib.load(MODEL_PATH)
 
 # Load the model
 model = load_model()
